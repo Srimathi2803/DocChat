@@ -13,23 +13,29 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 import os
 
+# Optionally load local secrets from .env during development.
+# On Streamlit Cloud, use Streamlit secrets instead.
 from dotenv import load_dotenv
 load_dotenv()
 
-os.environ['HF_TOKEN']=os.getenv("HugginFace_API_KEY")
-embeddings=HuggingFaceEmbeddings(model_name="nomic-ai/nomic-embed-text-v1")
+hf_token = st.secrets.get("HUGGINGFACE_API_KEY") or os.getenv("HugginFace_API_KEY") or os.getenv("HUGGINGFACE_API_KEY")
+if hf_token:
+    os.environ["HF_TOKEN"] = hf_token
+
+embeddings = HuggingFaceEmbeddings(model_name="nomic-ai/nomic-embed-text-v1")
 
 
 ## set up Streamlit 
-st.title("Conversational RAG With PDF uplaods and chat history")
-st.write("Upload Pdf's and chat with their content")
+st.title("Conversational RAG With PDF uploads and chat history")
+st.write("Upload PDF files and chat with their content")
 
-## Input the Groq API Key
-api_key=st.text_input("Enter your Groq API key:",type="password")
+## Read the Groq API key from Streamlit secrets or environment variables.
+api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+if not api_key:
+    api_key = st.text_input("Enter your Groq API key (local only):", type="password")
 
-## Check if groq api key is provided
 if api_key:
-    llm=ChatGroq(groq_api_key=api_key,model_name="openai/gpt-oss-20b")
+    llm = ChatGroq(groq_api_key=api_key, model_name="openai/gpt-oss-20b")
 
     ## chat interface
 
