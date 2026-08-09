@@ -18,21 +18,29 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+langchain_key = st.secrets.get("LANGCHAIN_API_KEY") or os.getenv("LANGCHAIN_API_KEY")
+if langchain_key:
+    os.environ["LANGCHAIN_API_KEY"] = langchain_key
+
 hf_token = st.secrets.get("HUGGINGFACE_API_KEY") or os.getenv("HugginFace_API_KEY") or os.getenv("HUGGINGFACE_API_KEY")
 if hf_token:
     os.environ["HF_TOKEN"] = hf_token
 
-embeddings = HuggingFaceEmbeddings(model_name="nomic-ai/nomic-embed-text-v1")
+# Enable LangChain tracing V2 if configured in secrets or environment variables.
+langchain_tracing_v2 = st.secrets.get("LANGCHAIN_TRACING_V2") or os.getenv("LANGCHAIN_TRACING_V2")
+if str(langchain_tracing_v2).lower() in ("true", "1", "yes"):
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
 
+embeddings = HuggingFaceEmbeddings(model_name="nomic-ai/nomic-embed-text-v1")
 
 ## set up Streamlit 
 st.title("Conversational RAG With PDF uploads and chat history")
 st.write("Upload PDF files and chat with their content")
 
-## Read the Groq API key from Streamlit secrets or environment variables.
-api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+## Read the LangChain API key from Streamlit secrets or environment variables.
+api_key = langchain_key
 if not api_key:
-    api_key = st.text_input("Enter your Groq API key (local only):", type="password")
+    api_key = st.text_input("Enter your LangChain API key (local only):", type="password")
 
 if api_key:
     llm = ChatGroq(groq_api_key=api_key, model_name="openai/gpt-oss-20b")
